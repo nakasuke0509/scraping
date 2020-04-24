@@ -21,8 +21,10 @@ async def main(site):
         if await season_crawler.season_exist():
             # このドラマにシーズン元であることのフラグを立てる
             db.set_season_origin_flag(drama_url)
+            # 作品の各シーズンURLを取得
             season_urls = await season_crawler.get_season_urls()
             for season_url in season_urls:
+                print('insert season url:{0}'.format(season_url))
                 # シーズンURLのレコードを作成
                 db.insert_season_url(drama_url, season_url)
                 # 各シーズンごとに巡回済みフラグを立てる
@@ -31,6 +33,7 @@ async def main(site):
         #各ドラマごとにシーズンクロールの巡回済みフラグを立てる
         db.set_season_checked_flag(drama_url)
 
+    print('finish season check crawl')
     await season_crawler.browser.close() # ブラウザーを終了する。
 
 if __name__ == '__main__':

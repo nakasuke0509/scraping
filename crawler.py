@@ -133,6 +133,19 @@ class ParaviCrawler(Crawler):
                 urls.append(url)
         return urls
 
+    async def get_season_div(self):
+        return await self.page.querySelector('div.series-canvas')
+
+    async def season_exist(self):
+        return await self.get_season_div()
+
+    async def get_season_urls(self):
+        season_urls = []
+        for a in await self.page.querySelectorAll('a.title'):
+            url = await self.page.evaluate('(e) => e.href', a)
+            season_urls.append(url)
+        return season_urls
+
 def crawler_factory(site, browser, page):
     if site == 'hulu':
         return HuluCrawler(browser, page)
