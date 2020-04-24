@@ -24,16 +24,18 @@ class Crawler(object):
         pass
 
     async def crawl_until_page_end(self):
-        html1 = await self.page.content()
+        scroll_height1 = await self.page.evaluate('window.pageYOffset')
         await asyncio.sleep(3)
 
         while True:
             await self.page.evaluate('window.scrollTo(0,document.body.scrollHeight)')
             await asyncio.sleep(3)
-            html2 = await self.page.content()
-            if html1 != html2:
-                html1 = html2
+            scroll_height2 = await self.page.evaluate('window.pageYOffset')
+            if scroll_height1 != scroll_height2:
+                scroll_height1 = scroll_height2
+                print('now page scrolling and yOffset is {0}'.format(scroll_height2))
             else:
+                print('page scroll finish')
                 break
 
     async def season_exist(self):
@@ -47,19 +49,7 @@ class HuluCrawler(Crawler):
     def __init__(self, browser, page):
         super().__init__(browser, page)
 
-    async def get_drama_urls(self, parent_url):
-        print( parent_url )
-    
-        await self.goto( parent_url )
-
-        # 下までクロール処理
-        await self.crawl_until_page_end()
-
-        await asyncio.sleep(1)
-        # 検索結果を表示する
-        title = await self.page.title()
-        print( title )
-
+    async def get_drama_urls(self):
         urls = []
         for a in await self.page.querySelectorAll('.title-card-title > a'):
             url = await self.page.evaluate('(e) => e.href', a)
@@ -128,9 +118,25 @@ class HuluCrawler(Crawler):
                 except:
                     print('none episode_number')
 
+class ParaviCrawler(Crawler):
+
+    def __init__(self, browser, page):
+        super().__init__(browser, page)
+
+    async def get_drama_urls(self):
+        urls = []
+        rows = await self.page.querySelectorAll('div.gallery-content > div > div.row')
+
+        for row in rows:
+            for a in await row.querySelectorAll('a'):
+                url = await self.page.evaluate('(e) => e.href', a)
+                urls.append(url)
+        return urls
 
 def crawler_factory(site, browser, page):
     if site == 'hulu':
         return HuluCrawler(browser, page)
+    elif site == 'paravi':
+        return ParaviCrawler(browser, page)
 
     
