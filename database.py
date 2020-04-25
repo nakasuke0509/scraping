@@ -189,5 +189,5 @@ class Database:
         drama_record = table.find_one(id=info['id'])
         info_category_set = set( info['category'].split(',') )
         info_category_set |= set( drama_record['category'].split(',') )
-        info['category'] = info_category_set.join(',')
+        info['category'] = ','.join(info_category_set)
         table.update(info, ['id'])
