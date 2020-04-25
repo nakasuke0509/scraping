@@ -180,9 +180,14 @@ class Database:
         """作品詳細情報をDBに保存
 
         作品詳細ページで取得した情報を格納したinfoをDBに保存
+        カテゴリーのみ既に保存されているデータがあるので、DBから取り出して整理したのち保存
 
         Args:
             info (dict) : 作品詳細ページで取得した情報
         """
         table = self.set_table()
+        drama_record = table.find_one(id=info['id'])
+        info_category_set = set( info['category'].split(',') )
+        info_category_set |= set( drama_record['category'].split(',') )
+        info['category'] = info_category_set.join(',')
         table.update(info, ['id'])

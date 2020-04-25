@@ -32,6 +32,9 @@ class Parser(object):
     def get_season(self):
         return ''
 
+    def get_category(self):
+        return ''
+
     def set_info(self, info):
         info['title'] = self.get_drama_title()
         info['introduction'] = self.get_drama_introduction()
@@ -42,6 +45,7 @@ class Parser(object):
         info['author'] = self.get_screenwriter()
         info['screenwriter'] = self.get_screenwriter()
         info['season'] = self.get_season()
+        info['category'] = self.get_category()
 
         return info
 
@@ -82,16 +86,16 @@ class HuluParser(Parser):
         # liタグをループ
         listlabel = ''
         for staff_li in staff_lis:
-            # li.listLabelが回ってくるたびにstaff_dictにkey:[]の形で追加
+            # li.listLabelが回ってくるたびにstaff_dictにkey:setの形でsetに追加
             if staff_li.has_attr('class') and staff_li['class'][0] == 'listLabel':
                 listlabel = staff_li.get_text(strip=True)
                 print( listlabel )
-                #staff_dict[listlabel] = []
-                staff_dict.setdefault(listlabel, [])
+                #staff_dict[listlabel] = set()
+                staff_dict.setdefault(listlabel, set())
                 print( staff_dict )
             # それ以外の場合は人物なのでリストに追加
             else:
-                staff_dict[listlabel].append(staff_li.get_text(strip=True))
+                staff_dict[listlabel].add(staff_li.get_text(strip=True))
 
         return staff_dict
     
@@ -115,7 +119,71 @@ class HuluParser(Parser):
         season = season_div.get_text() if season_div else ''
         return season
 
+class ParaviParser(Parser):
+
+    def __init__(self, html):
+        self.soup = bs4(html, 'html.parser')
+
+    def get_drama_title(self):
+        title = self.soup.select_one('div.title-overview-content > h3 > div')
+        title = title.get_text() if title else ''
+        return title
+
+    def get_drama_introduction(self):
+        introduction = self.soup.select_one('div.title-overview-content > div.synopsis')
+        introduction = introduction.get_text() if introduction else ''
+        return introduction
+
+    def get_episode_number(self):
+        episode_number_text = self.soup.select_one('div.meta > span.duration')
+        episode_number = re.sub('[^0-9]','', episode_number_text.get_text()) if episode_number_text else '' 
+        return episode_number
+
+    def get_start_year(self):
+        start_year = self.soup.select_one('div.meta > span.year')
+        start_year = re.sub('[^0-9]','', start_year.get_text()) if start_year else ''
+        return start_year
+
+    def __get_meta_dict(self):
+        meta_lis = self.soup.select('div.meta-details li')
+        meta_dict = {}
+        # liタグをループ
+        listlabel = ''
+        for meta_li in meta_lis:
+            # li.listLabelが回ってくるたびにstaff_dictにkey:setの形でsetに追加
+            if meta_li.has_attr('class') and meta_li['class'][0] == 'listLabel':
+                listlabel = meta_li.get_text(strip=True)
+                print( listlabel )
+                #staff_dict[listlabel] = set()
+                meta_dict.setdefault(listlabel, set())
+                print( meta_dict )
+            else:
+                meta_dict[listlabel].add(meta_li.get_text(strip=True))
+
+        return meta_dict
+    
+    def get_casts(self):
+        meta_dict = self.__get_meta_dict()
+        casts = ','.join( meta_dict.get('出演') ) if meta_dict.get('出演') else '' 
+        return casts
+    
+    def get_author(self):
+        meta_dict = self.__get_meta_dict()
+        author = ','.join( meta_dict.get('原作') ) if meta_dict.get('原作') else ''
+        return author
+
+    def get_screenwriter(self):
+        meta_dict = self.__get_meta_dict()
+        screenwriter = ','.join( meta_dict.get('脚本') ) if meta_dict.get('脚本') else ''
+        return screenwriter
+
+    def get_category(self, info):
+        meta_dict = self.__get_meta_dict()
+        category = ','.join( meta_dict.get('ジャンル') ) if meta_dict.get('ジャンル') else ''
+        return category
 
 def parser_factory(site, html):
     if site == 'hulu':
         return HuluParser(html)
+    elif site == 'paravi':
+        return ParaviParser(html)
