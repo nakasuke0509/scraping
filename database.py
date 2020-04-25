@@ -102,19 +102,23 @@ class Database:
         dramas = table.find(season_checked_flag=0)
         return dramas
 
-    def insert_season_url(self, drama_url: str, season_url: str) -> 'void':
+    def insert_season_url(self, drama_url: str, season_url: str, season: str) -> 'void':
         """作品の各シーズンurlを元にレコードを作成
 
         Args:
             drama_url (str) : 作品詳細URL
             season_url (str) : 作品の持つシーズンのURL
+            season (str) : シーズン名
         """
         table = self.set_table()
         season_record = table.find_one(url=season_url)
         drama_record  = table.find_one(url=drama_url)
         if not season_record:
-            data=dict(url=season_url, is_global=drama_record['is_global'], category=drama_record['category'])
+            data=dict(url=season_url, is_global=drama_record['is_global'], category=drama_record['category'], season=season)
             table.insert(data)
+        else:
+            data=dict(id=season_record['id'], url=season_url, is_global=drama_record['is_global'], category=drama_record['category'], season=season)
+            table.update(data, ['id'])
 
     def set_season_origin_flag(self, drama_url: str) -> 'void':
         """シーズン元のドラマの場合、フラグを立てる

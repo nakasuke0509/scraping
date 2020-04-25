@@ -41,7 +41,7 @@ class Crawler(object):
     async def season_exist(self):
         pass
 
-    async def get_season_urls(self):
+    async def get_season(self):
         pass
     
 class HuluCrawler(Crawler):
@@ -62,8 +62,8 @@ class HuluCrawler(Crawler):
     async def season_exist(self):
         return await self.get_season_drop_down_div()
 
-    async def get_season_urls(self):
-        season_urls = []
+    async def get_seasons(self):
+        seasons = []
         season_drop_down_div  = await self.get_season_drop_down_div()
         await season_drop_down_div.tap()
         await self.page.evaluate('(element) => element.click()', season_drop_down_div)
@@ -89,12 +89,13 @@ class HuluCrawler(Crawler):
             # シーズンをクリック
             season_list_span = await season_list_tags[index].querySelector('span')
             #シーズンの表示名を確認
-            print(await self.page.evaluate('(element) => element.innerText', season_list_span))
+            season_name = await self.page.evaluate('(element) => element.innerText', season_list_span)
+            print(season_name)
             await self.page.evaluate('(element) => element.click()', season_list_span)
             await asyncio.sleep(3)
             season_url = self.page.url
-            season_urls.append(season_url)
-        return season_urls
+            seasons.append({'season_url': season_url, 'season_name': season_name})
+        return seasons
     
     async def load_dynamic_dom(self):
         await self.load_episode_number()
@@ -139,12 +140,13 @@ class ParaviCrawler(Crawler):
     async def season_exist(self):
         return await self.get_season_div()
 
-    async def get_season_urls(self):
-        season_urls = []
+    async def get_seasons(self):
+        seasons = []
         for a in await self.page.querySelectorAll('a.title'):
-            url = await self.page.evaluate('(e) => e.href', a)
-            season_urls.append(url)
-        return season_urls
+            season_url = await self.page.evaluate('(e) => e.href', a)
+            season_name = await self.page.evaluate('(e) => e.innerText', a)
+            seasons.append({'season_url': season_url, 'season_name': season_name})
+        return seasons
 
 def crawler_factory(site, browser, page):
     if site == 'hulu':

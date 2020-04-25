@@ -22,11 +22,13 @@ async def main(site):
             # このドラマにシーズン元であることのフラグを立てる
             db.set_season_origin_flag(drama_url)
             # 作品の各シーズンURLを取得
-            season_urls = await season_crawler.get_season_urls()
-            for season_url in season_urls:
+            seasons = await season_crawler.get_seasons()
+            for season in seasons:
+                season_url = season['season_url']
+                season_name = season['season_name']
                 print('insert season url:{0}'.format(season_url))
                 # シーズンURLのレコードを作成
-                db.insert_season_url(drama_url, season_url)
+                db.insert_season_url(drama_url, season_url, season_name)
                 # 各シーズンごとに巡回済みフラグを立てる
                 db.set_season_checked_flag(season_url)
             
