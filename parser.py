@@ -177,7 +177,7 @@ class ParaviParser(Parser):
         screenwriter = ','.join( meta_dict.get('脚本') ) if meta_dict.get('脚本') else ''
         return screenwriter
 
-    def get_category(self, info):
+    def get_category(self):
         meta_dict = self.__get_meta_dict()
         category = ','.join( meta_dict.get('ジャンル') ) if meta_dict.get('ジャンル') else ''
         return category
