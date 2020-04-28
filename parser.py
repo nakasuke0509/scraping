@@ -29,6 +29,12 @@ class Parser(object):
     def get_screenwriter(self):
         return ''
 
+    def get_artist(self):
+        return ''
+
+    def get_themesong(self):
+        return ''
+
     def get_season(self):
         return ''
 
@@ -44,6 +50,8 @@ class Parser(object):
         info['casts'] = self.get_casts()
         info['author'] = self.get_screenwriter()
         info['screenwriter'] = self.get_screenwriter()
+        info['artist'] = self.get_artist()
+        info['themesong'] = self.get_themesong()
         info['season'] = self.get_season()
         info['category'] = self.get_category()
 
@@ -125,9 +133,21 @@ class ParaviParser(Parser):
         self.soup = bs4(html, 'html.parser')
 
     def get_drama_title(self):
-        title = self.soup.select_one('div.title-overview-content > h3 > div')
+        # シーズンが存在する場合の作品のタイトル
+        title = self.soup.select_one('div.title-overview-content > div.title-link > a')
+        if not title:
+            # シーズンが存在しない場合の作品のタイトル(シーズンがある場合はシーズン名が表記されている)
+            title = self.soup.select_one('div.title-overview-content > h3 > div')
+        if not title:
+            title = self.soup.select_one('p.playable-title')
         title = title.get_text() if title else ''
         return title
+
+    def get_season(self):
+        if self.soup.select_one('div.title-overview-content > div.title-link > a'):
+            season = self.soup.select_one('div.title-overview-content > h3 > div')
+            season = season.get_text() if season else ''
+            return season
 
     def get_drama_introduction(self):
         introduction = self.soup.select_one('div.title-overview-content > div.synopsis')
@@ -176,6 +196,16 @@ class ParaviParser(Parser):
         meta_dict = self.__get_meta_dict()
         screenwriter = ','.join( meta_dict.get('脚本') ) if meta_dict.get('脚本') else ''
         return screenwriter
+
+    def get_artist(self):
+        meta_dict = self.__get_meta_dict()
+        artist = ','.join( meta_dict.get('音楽') ) if meta_dict.get('音楽') else ''
+        return artist
+
+    def get_themesong(self):
+        meta_dict = self.__get_meta_dict()
+        themesong = ','.join( meta_dict.get('音楽') ) if meta_dict.get('音楽') else ''
+        return themesong
 
     def get_category(self):
         meta_dict = self.__get_meta_dict()
